@@ -1,5 +1,3 @@
-Jan 12, 2012
-
 This is a nagios plugin to check the total amount of traffic passing within a defined time period. This script takes in three main values:<br>
 <br>
 traffic threshold in<br>
