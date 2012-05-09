@@ -1,17 +1,13 @@
-This is a nagios plugin to check the total amount of traffic passing within a defined time period. This script takes in three main values:<br>
-<br>
-traffic threshold in<br>
-traffic threshold out<br>
-time period<br>
-<br>
-run the script with --help for full list of variables possible. (help output below)<br>
+This is a nagios plugin to check the total amount of traffic passing over an interface within a defined time period. 
+
+run the script with --help for full list of variables possible.<br>
 <br>
 The script will exit code > 0 if the threshold of in/out is exceeded within the time period. A summary is also printed. This script does not need to be run via Nagios, and could be used stand alone, or invoked via cron.
 
-Please provide feedback/bug reports. I will maintain this script, and expand it based on input from users.
+Please provide feedback/bug reports. I will maintain this script, and expand it based on input from users. This project was moved from google code (http://code.google.com/p/checksnmptraffic/).
 
-==HELP==
-{{{
+##Help
+<pre>
 #./check_snmp_traffic --help
 usage: check_snmp_traffic [options]
 
@@ -44,8 +40,8 @@ options:
                         differentiate data between multiple interfaces on a
                         single host.
 }}}
+</pre>
 
-
-Requirements:
+##Requirements:
 snmpwalk (yum install net-snmp-utils)
 
