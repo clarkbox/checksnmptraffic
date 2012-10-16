@@ -9,6 +9,7 @@ import os
 import time
 import datetime
 
+
 log = True
 snmp_ifout="1.3.6.1.2.1.31.1.1.1.6.2"
 snmp_ifin="1.3.6.1.2.1.31.1.1.1.10.2"
