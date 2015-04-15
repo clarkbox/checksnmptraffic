@@ -1,13 +1,12 @@
 <h1>check snmp traffic total</h1>
 
-
-This is a nagios plugin to check the total amount of traffic passing over an interface within a defined time period. 
-
-run the script with --help for full list of variables possible.<br>
+This is a nagios plugin to check the total amount of traffic passing over an interface within a defined time period. It can also be used stand alone as CLI tool. Run the script with --help for the full list of options.<br>
 <br>
 The script will exit code > 0 if the threshold of in/out is exceeded within the time period. A summary is also printed. This script does not need to be run via Nagios, and could be used stand alone, or invoked via cron.
 
-Please provide feedback/bug reports. I will maintain this script, and expand it based on input from users. This project was moved from google code (http://code.google.com/p/checksnmptraffic/).
+I have used this script in production since 2010 and its been solid. Please provide feedback/bug reports. I will maintain this script, and expand it based on input from users. This project was moved from google code (http://code.google.com/p/checksnmptraffic/).
+
+Send all commercial use bitcoin donations to: 1H6vCrypVRySXyovxWAcAUMEJV2Y7Rdh5B
 
 ##Help
 <pre>
