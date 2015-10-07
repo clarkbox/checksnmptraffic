@@ -41,7 +41,6 @@ options:
   --if-number=IFNUMBER  the interface for the host. this is used only to
                         differentiate data between multiple interfaces on a
                         single host.
-}}}
 </pre>
 
 ##Requirements:
