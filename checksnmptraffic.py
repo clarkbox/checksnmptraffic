@@ -144,7 +144,6 @@ def main():
 	parser.add_option("--if-number",type="int",dest="ifNumber",help="the interface for the host. this is used only to differentiate data between multiple interfaces on a single host.", default=100)
 
 	(options, args) = parser.parse_args(sys.argv[1:])
-
 	critWhen = {"trafficOutThreshold":options.critOut, "trafficInThreshold" : options.critIn}
 	warnWhen = {"trafficOutThreshold" : options.warnOut, "trafficInThreshold" : options.warnIn}
 
