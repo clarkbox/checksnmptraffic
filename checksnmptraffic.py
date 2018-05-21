@@ -136,7 +136,7 @@ def main():
 	parser.add_option("--checkOnly",dest="checkOnly",help="specify this option for read only access to database.",action="store_true")
 	parser.add_option("--dir",dest="dir",help="directory to store persistance file. reccomend storing in tmp. do not add trailing slash",default="/tmp")
 	parser.add_option("--community",dest="community",help="SNMP Community. usually public.",default="public")
-	parser.add_option("--currentLtLast",dest="currentLtLast",help="warn or crit - if current traffic is less than last recorder, usually indicates that host was reset.", default=False)
+	parser.add_option("--currentLtLast",dest="currentLtLast",help="warn or crit - if current traffic is less than last recorded, usually indicates that host was reset.", default=False)
 	parser.add_option("--emptyDb",dest="emptyDb",help="warn or crit - if the database does not contain this host. might indicate this server nagios runs on was reset.", default=False)
 	parser.add_option("--snmpCommand",dest="snmpCommand",help="SNMP Command to use - snmpget or snmpwalk. snmpget by default", default="snmpget")
 	parser.add_option("--snmpIn",dest="snmpIn",help="SNMP MIB for intrafce IN counter ", default=snmp_ifin)
