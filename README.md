@@ -29,7 +29,7 @@ options:
                         SNMP Community. usually public.
   --currentLtLast=CURRENTLTLAST
                         warn or crit - if current traffic is less than last
-                        recorder, usually indicates that host was reset.
+                        recorded, usually indicates that host was reset.
   --emptyDb=EMPTYDB     warn or crit - if the database does not contain this
                         host. might indicate this server nagios runs on was
                         reset.
