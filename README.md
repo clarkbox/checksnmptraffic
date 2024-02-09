@@ -1,6 +1,6 @@
 <h1>check snmp traffic total</h1>
 
-This is a nagios plugin (or standalone script) that will monitor the total traffic over an interface. Interface stats reset when a system reboots. To account for this, the script will record the interface traffic to a database after each run, and sum between reboots. This should only be used as a guide, and may not be an accuate representation of actual traffic passing across the wire.<br>
+This is a nagios plugin (or it can be run as a standalone script) that will monitor the total traffic over an interface. Interface stats reset when a system reboots. To account for this, the script will record the interface traffic to a database after each run, and sum between reboots. This should only be used as a guide, and may not be an accuate representation of actual traffic passing across the wire.<br>
 <br>
 To use it as a stand alone as CLI tool, run the script with --help for the full list of options.<br>
 <br>
