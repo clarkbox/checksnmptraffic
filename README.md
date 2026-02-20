@@ -8,6 +8,9 @@ The script will exit code > 0 if the threshold of in/out is exceeded within the 
 
 This project was moved from google code (http://code.google.com/p/checksnmptraffic/).
 
+##Python 2 release
+- Python 2 baseline release: [v0.1](https://github.com/clarkbox/checksnmptraffic/releases/tag/v0.1)
+
 ##Help
 <pre>
 #./check_snmp_traffic --help
