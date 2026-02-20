@@ -1,13 +1,11 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 
 import sys
-import getopt
 import optparse
-import commands
 import shelve
-import os
 import time
 import datetime
+import subprocess
 
 
 log = True
@@ -36,8 +34,8 @@ def runSnmpCheck(snmpCommand, snmpIn, snmpOut, host, ifNumber, warnWhen, critWhe
 	cmdSnmpOut = snmpCommand+" -v2c -c "+ community +" "+ host +" "+ snmpOut
 
 	#execure the command TODO thread these based on user parameter option
-	(cInStatus,cInOutput) = commands.getstatusoutput(cmdSnmpIn)
-	(cOutStatus,cOutOutput) = commands.getstatusoutput(cmdSnmpOut)
+	(cInStatus,cInOutput) = subprocess.getstatusoutput(cmdSnmpIn)
+	(cOutStatus,cOutOutput) = subprocess.getstatusoutput(cmdSnmpOut)
 
 	#set the time the commands were completed
 	now = time.mktime(datetime.datetime.now().timetuple())
@@ -47,7 +45,7 @@ def runSnmpCheck(snmpCommand, snmpIn, snmpOut, host, ifNumber, warnWhen, critWhe
 	trafCurrentOut = cOutOutput[cOutOutput.rfind(":")+1:].strip()
 
 	#get last value if this host is in db. assume if there is host, there is data.
-	if d.has_key(host):
+	if host in d:
 		trafLastIn = d[host][ifNumber]["inCount"]
 		trafLastOut = d[host][ifNumber]["outCount"]
 		trafLastRecorded = d[host][ifNumber]["recorded"]
@@ -84,7 +82,7 @@ def runSnmpCheck(snmpCommand, snmpIn, snmpOut, host, ifNumber, warnWhen, critWhe
 			status["message"] += " datbase did not contain host. traffic counter is at zero. "
 
 		if checkOnly:
-			print "could not check host. no host in database.\nremove checkOnly option to insert host, and begin tracking bandwidth. "
+			print("could not check host. no host in database.\nremove checkOnly option to insert host, and begin tracking bandwidth. ")
 			sys.exit(3);
 		else:
 			#insert host regardless of period
@@ -120,7 +118,7 @@ def runSnmpCheck(snmpCommand, snmpIn, snmpOut, host, ifNumber, warnWhen, critWhe
 
 	returnOutput = status["message"] + "- IN: "+ str(trafInDiffMb)+"MB / OUT: "+str(trafOutDiffMb)+"MB / duration: " +str(timeDiffMin)+"min. "
 
-	print returnOutput
+	print(returnOutput)
 	sys.exit(returnCode)
 
 def main():
@@ -144,6 +142,7 @@ def main():
 	parser.add_option("--if-number",type="int",dest="ifNumber",help="the interface for the host. this is used only to differentiate data between multiple interfaces on a single host.", default=100)
 
 	(options, args) = parser.parse_args(sys.argv[1:])
+
 	critWhen = {"trafficOutThreshold":options.critOut, "trafficInThreshold" : options.critIn}
 	warnWhen = {"trafficOutThreshold" : options.warnOut, "trafficInThreshold" : options.warnIn}
 
