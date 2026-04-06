@@ -2,7 +2,11 @@
 
 import sys
 import optparse
-import shelve
+import hashlib
+import json
+import os
+import re
+import tempfile
 import time
 import datetime
 import subprocess
@@ -13,7 +17,48 @@ snmp_ifout="1.3.6.1.2.1.31.1.1.1.6.2"
 snmp_ifin="1.3.6.1.2.1.31.1.1.1.10.2"
 
 def buildHostRecord(ifNumber, trafficIn, trafficOut, timeRecorded ):
-	return {ifNumber:{"inCount":trafficIn, "outCount":trafficOut, "recorded": timeRecorded }}
+	return {"inCount":trafficIn, "outCount":trafficOut, "recorded": timeRecorded }
+
+def buildStateFile(dir, host, ifNumber):
+	safeHost = re.sub(r"[^A-Za-z0-9_.-]+", "_", host).strip("._")
+	if not safeHost:
+		safeHost = "host"
+	hostHash = hashlib.sha256(host.encode("utf-8")).hexdigest()[:12]
+	return os.path.join(dir, "nagiostraffic-"+safeHost+"-"+hostHash+"-if"+str(ifNumber)+".json")
+
+def loadHostRecord(stateFile):
+	try:
+		with open(stateFile, "r", encoding="utf-8") as stateHandle:
+			hostRecord = json.load(stateHandle)
+	except FileNotFoundError:
+		return None
+	except (json.JSONDecodeError, OSError, ValueError):
+		return None
+
+	if not isinstance(hostRecord, dict):
+		return None
+
+	for requiredKey in ("inCount", "outCount", "recorded"):
+		if requiredKey not in hostRecord:
+			return None
+
+	return hostRecord
+
+def writeHostRecord(stateFile, hostRecord):
+	os.makedirs(os.path.dirname(stateFile), exist_ok=True)
+	tempFile = None
+	tempHandle = None
+
+	try:
+		(fd, tempFile) = tempfile.mkstemp(prefix=os.path.basename(stateFile)+".", suffix=".tmp", dir=os.path.dirname(stateFile))
+		with os.fdopen(fd, "w", encoding="utf-8") as tempHandle:
+			json.dump(hostRecord, tempHandle, sort_keys=True)
+			tempHandle.flush()
+			os.fsync(tempHandle.fileno())
+		os.replace(tempFile, stateFile)
+	finally:
+		if tempFile and os.path.exists(tempFile):
+			os.unlink(tempFile)
 
 def runSnmpCheck(snmpCommand, snmpIn, snmpOut, host, ifNumber, warnWhen, critWhen, dir, community, period, checkOnly):
 
@@ -21,13 +66,9 @@ def runSnmpCheck(snmpCommand, snmpIn, snmpOut, host, ifNumber, warnWhen, critWhe
 	trafLastOut = 0
 	trafLastRecorded = 0
 	timeDiffMin = 0
-	dbFile = dir+"/nagiostraffic.db"
+	stateFile = buildStateFile(dir, host, ifNumber)
 	status = {"warn":0, "crit":0, "message":""}
 	returnCode = 0
-
-	#open DB
-	d = shelve.open(dbFile)
-	#todo ensure DB was opened/writable
 
 	#snmp command line
 	cmdSnmpIn = snmpCommand+" -v2c -c "+ community +" "+ host +" "+ snmpIn
@@ -44,11 +85,12 @@ def runSnmpCheck(snmpCommand, snmpIn, snmpOut, host, ifNumber, warnWhen, critWhe
 	trafCurrentIn = cInOutput[cInOutput.rfind(":")+1:].strip()
 	trafCurrentOut = cOutOutput[cOutOutput.rfind(":")+1:].strip()
 
-	#get last value if this host is in db. assume if there is host, there is data.
-	if host in d:
-		trafLastIn = d[host][ifNumber]["inCount"]
-		trafLastOut = d[host][ifNumber]["outCount"]
-		trafLastRecorded = d[host][ifNumber]["recorded"]
+	#get last value if this host/interface has a state file.
+	hostRecord = loadHostRecord(stateFile)
+	if hostRecord is not None:
+		trafLastIn = hostRecord["inCount"]
+		trafLastOut = hostRecord["outCount"]
+		trafLastRecorded = hostRecord["recorded"]
 
 		if int(trafLastOut) > int(trafCurrentOut) or int(trafLastIn) > int(trafCurrentIn):
 			#print "current less than last"
@@ -60,7 +102,7 @@ def runSnmpCheck(snmpCommand, snmpIn, snmpOut, host, ifNumber, warnWhen, critWhe
 				status["message"] += "current value is less than last record. traffic counter has been reset and is at zero. "
 
 			if not checkOnly:
-				d[host] = buildHostRecord(ifNumber, trafCurrentIn, trafCurrentOut, now )
+				writeHostRecord(stateFile, buildHostRecord(ifNumber, trafCurrentIn, trafCurrentOut, now ))
 
 		timeDiffSeconds = (int(now) - int(trafLastRecorded))
 		timeDiffMin = timeDiffSeconds//60
@@ -70,23 +112,23 @@ def runSnmpCheck(snmpCommand, snmpIn, snmpOut, host, ifNumber, warnWhen, critWhe
 
 		if not checkOnly:
 			if(int(timeDiffSeconds) > int(period)):
-				#update host if period has expired.
-				d[host] = buildHostRecord(ifNumber, trafCurrentIn, trafCurrentOut, now )
+				#update host/interface if period has expired.
+				writeHostRecord(stateFile, buildHostRecord(ifNumber, trafCurrentIn, trafCurrentOut, now ))
 
 	else:
 		if critWhen["emptyDb"]:
 			status["crit"] = status["crit"]+1
-			status["message"] += " datbase did not contain host. traffic counter is at zero. "
+			status["message"] += " state file did not contain host/interface data. traffic counter is at zero. "
 		elif warnWhen["emptyDb"]:
 			status["warn"] = status["warn"]+1
-			status["message"] += " datbase did not contain host. traffic counter is at zero. "
+			status["message"] += " state file did not contain host/interface data. traffic counter is at zero. "
 
 		if checkOnly:
-			print("could not check host. no host in database.\nremove checkOnly option to insert host, and begin tracking bandwidth. ")
+			print("could not check host/interface. no state file exists.\nremove checkOnly option to insert host, and begin tracking bandwidth. ")
 			sys.exit(3);
 		else:
-			#insert host regardless of period
-			d[host] = buildHostRecord(ifNumber, trafCurrentIn, trafCurrentOut, now )
+			#insert host/interface regardless of period
+			writeHostRecord(stateFile, buildHostRecord(ifNumber, trafCurrentIn, trafCurrentOut, now ))
 			trafLastIn = trafCurrentIn
 			trafLastOut = trafCurrentOut
 			trafLastRecorded = now
@@ -135,7 +177,7 @@ def main():
 
 	#optional
 	parser.add_option("--checkOnly",dest="checkOnly",help="specify this option for read only access to database.",action="store_true")
-	parser.add_option("--dir",dest="dir",help="directory to store persistance file. reccomend storing in tmp. do not add trailing slash",default="/tmp")
+	parser.add_option("--dir",dest="dir",help="directory to store persistent state files. reccomend storing in tmp. do not add trailing slash",default="/tmp")
 	parser.add_option("--community",dest="community",help="SNMP Community. usually public.",default="public")
 	parser.add_option("--currentLtLast",dest="currentLtLast",help="warn or crit - if current traffic is less than last recorded, usually indicates that host was reset.", default=False)
 	parser.add_option("--emptyDb",dest="emptyDb",help="warn or crit - if the database does not contain this host. might indicate this server nagios runs on was reset.", default=False)
