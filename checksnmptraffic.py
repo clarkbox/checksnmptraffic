@@ -87,6 +87,9 @@ def runSnmpCheck(snmpCommand, snmpIn, snmpOut, host, ifNumber, warnWhen, critWhe
 		else:
 			#insert host regardless of period
 			d[host] = buildHostRecord(ifNumber, trafCurrentIn, trafCurrentOut, now )
+			trafLastIn = trafCurrentIn
+			trafLastOut = trafCurrentOut
+			trafLastRecorded = now
 
 	trafInDiff = int(trafCurrentIn) - int(trafLastIn)
 	trafInDiffMb = trafInDiff//1024//1024
